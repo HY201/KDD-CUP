@@ -47,9 +47,11 @@ all_tpr = []
 for i, (train, test) in enumerate(cv):
 	#通过训练数据，使用svm线性核建立模型，并对测试集进行测试，求出预测得分
     probas_ = classifier.fit(X[train], y[train]).predict_proba(X[test])
+#    print probas_
     # Compute ROC curve and area the curve
     #通过roc_curve()函数，求出fpr和tpr，以及阈值
     fpr, tpr, thresholds = roc_curve(y[test], probas_[:, 1])
+
     mean_tpr += interp(mean_fpr, fpr, tpr)			#对mean_tpr在mean_fpr处进行插值，通过scipy包调用interp()函数
     mean_tpr[0] = 0.0 								#初始处为0
     roc_auc = auc(fpr, tpr)
