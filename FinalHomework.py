@@ -8,11 +8,14 @@ from sklearn import tree
 from sklearn import neighbors
 from sklearn.metrics import roc_curve, auc
 from sklearn.ensemble import BaggingRegressor
+from sklearn.ensemble import BaggingClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.feature_extraction import DictVectorizer
 from sklearn import preprocessing
+from sklearn.cross_validation import StratifiedKFold
 import pandas as pd
 import MutiLabelEncoder as labelencoder
+import random
 
 #data is divided into two parts : traning data and test data
 def splitData(dataSet, num_of_testing):
@@ -30,44 +33,45 @@ def loadLabel(filePath):
     training_label, testing_label = splitData(df, 1000)
     return training_label[0], testing_label[0]
 
+#testing_label and test_data isn't used temperorily
 def classify(traning_data, training_label, test_data, testing_label):
-    clf = tree.DecisionTreeClassifier()
-    clf = clf.fit(traning_data, training_label)
+    fold = 2
+    skf = StratifiedKFold(training_label, fold)
+    roc_auc = 0    
     
-#    test_label = clf.predict(test_data)
-#    return test_label
-    probas_  = clf.predict_proba(test_data)
-    fpr, tpr, thresholds = roc_curve(testing_label, probas_[:, 0])
-    roc_auc = auc(fpr, tpr)    
+    for train, test in skf:
+        clf = BaggingClassifier(tree.DecisionTreeClassifier(), max_samples=0.5, max_features=0.5)    
     
-    return roc_auc
+        clf = clf.fit(traning_data.iloc[train], training_label.iloc[train])
 
-def classify2(traning_data, training_label, test_data, testing_label):
-    clf = neighbors.KNeighborsClassifier(15)
-    clf = clf.fit(traning_data, training_label)
-
-#    test_label = clf.predict(test_data)
-    probas_  = clf.predict_proba(test_data)
-    fpr, tpr, thresholds = roc_curve(testing_label, probas_[:, 0])
-    roc_auc = auc(fpr, tpr)    
+        probas_  = clf.predict_proba(traning_data.iloc[test])
+        fpr, tpr, thresholds = roc_curve(training_label.iloc[test], probas_[:, 0])
+        roc_auc += auc(fpr, tpr)    
     
-    return roc_auc
-
-def classify3(traning_data, training_label, test_data, testing_label):
-    clf = BaggingRegressor(DecisionTreeRegressor())
-    clf = clf.fit(traning_data, training_label)
-
-#    test_label = clf.predict(test_data)
-#    probas_  = clf.predict_proba(test_data)
-    probas_ = clf.predict(test_data)
-#    fpr, tpr, thresholds = roc_curve(testing_label, probas_[:, 0])
-#    roc_auc = auc(fpr, tpr)    
-    
-    return probas_
+    return roc_auc / fold
     
 def replaceMissingValue(data):
     data  = data.fillna(0)
     return data
+    
+def balance(data, label, ratio):
+    data['label'] = label
+    
+    negative_data = data[data['label'] == -1]
+    positive_data = data[data['label'] == 1]    
+    
+    negative_num = int(ratio * (label[label == -1]).shape[0])
+    print negative_num
+    
+        
+    for i in range(negative_num):
+        ran = random.randint(0, negative_num - i)
+        negative_data = negative_data.drop(negative_data.index[ran])
+            
+    data = negative_data.append(positive_data)    
+
+    return data
+    
 
 #e.g. columns = ['Var1', 'Var2']
 def labelEncoder(dataframe, columns):
@@ -84,24 +88,23 @@ def main():
     training_data = replaceMissingValue(training_data)
     testing_data = replaceMissingValue(testing_data)    
 
+#    balance(training_data, appe_label, 0.7)    
+    
     #retrieve parts of data
     part_testing_data = testing_data.iloc[:, 220:223]
     part_training_data = training_data.iloc[:, 220:223]
+    part_testing_data = balance(part_training_data, appe_label, 0.3)        
+    part_training_data = balance(part_training_data, appe_label, 0.3)
     
     #transform caterical data into integer  
-    part_testing_data = labelEncoder(part_testing_data, ['Var221', 'Var222', 'Var223'])
-    part_training_data = labelEncoder(part_training_data, ['Var221', 'Var222', 'Var223'])
+#    part_testing_data = labelEncoder(part_testing_data, ['Var221', 'Var222', 'Var223'])
+#    part_training_data = labelEncoder(part_training_data, ['Var221', 'Var222', 'Var223'])
         
-    print part_testing_data
-    print classify(part_training_data, appe_label, part_testing_data, appe_label_test)    
+#    print part_testing_data
+#    print "appe: %f" % classify(part_training_data, appe_label, part_testing_data, appe_label_test)    
+#    print "churn: %f" % classify(part_training_data, churn_label, part_testing_data, churn_label_test)    
+#    print "upsel: %f" % classify(part_training_data, upsel_label, part_testing_data, upsel_label_test)        
     
-#    print training_data    
-#    print appe_label.astype(str).values
-    
-#    part_training_data = training_data.iloc[:, 5:7]
-#    part_testing_data = testing_data.iloc[:, 5:7]
-#    print classify(part_training_data, appe_label, part_testing_data, appe_label_test)    
-#    print classify(training_data, appe_label, testing_data, appe_label_test)    
     
     
 main()
