@@ -60,3 +60,87 @@ def getTwoTypesData(filename):
     
 #    return data[columns_discrete], data[columns_numeric]
     return data
+    
+def getNoMissingData(filename):
+    data = pd.read_csv(filename, sep='\t')
+    #data = raw.dropna(axis=0, how='all')
+    #data = raw.dropna(axis=1, how='all')
+    
+    columns = []
+    columns_discrete = []
+    columns_numeric = []
+    for i in range(data.columns.shape[0]):
+        col_name = data.columns.values[i]
+        columns.append(col_name)
+        if data[col_name].dtypes == np.object:
+            columns_discrete.append(col_name)
+        else:
+            columns_numeric.append(col_name)
+        
+    uniq_count = []
+    for col in columns:
+        uniq_count.append(len(data[col].unique()))
+        
+    #count_10 = 0
+    #count_100 = 0
+    #count_1000 = 0
+    #count_10000 = 0
+    #count_50000 = 0
+    #for x in uniq_count:
+    #    if x < 10:
+    #        count_10 = count_10 + 1
+    #    elif x < 100:
+    #        count_100 = count_100 + 1
+    #    elif x < 1000:
+    #        count_1000 = count_1000 + 1
+    #    elif x < 10000:
+    #        count_10000 = count_10000 + 1
+    #    else:
+    #        count_50000 = count_50000 + 1
+    #        
+    #print "0-10:", count_10
+    #print "10-100:", count_100
+    #print "100-1000:", count_1000
+    #print "1000-10000:", count_10000
+    #print ">10000:", count_50000
+    
+    miss_count = []
+    for col in columns:    
+        count = 0
+        for x in data[col].isnull():
+            if x == True:
+                count = count + 1
+        miss_count.append(count)
+    #print count_miss
+    
+    good_feature = []    
+    for i in xrange(len(columns)):
+        if miss_count[i] <1000 and uniq_count[i] > 2:
+            good_feature.append(columns[i])
+#    print good_feature
+
+    data = data.dropna(axis=0, how='all')
+    data = data.dropna(axis=1, how='all')    
+    
+    columns = []
+    columns_discrete = []
+    columns_numeric = []
+    for i in range(data.columns.shape[0]):
+        col_name = data.columns.values[i]
+        columns.append(col_name)
+        if data[col_name].dtypes == np.object:
+            columns_discrete.append(col_name)
+        else:
+            columns_numeric.append(col_name)    
+    
+    data.fillna(data.mean(), inplace=True)   
+    
+    for i in xrange(data.columns.shape[0]):
+        col_name = data.columns.values[i]
+        data[col_name].fillna(data[col_name].mode()[0], inplace=True)    
+        
+    data = labelEncoder(data, columns_discrete)
+    
+    
+    return data[good_feature]
+#    return data[columns_discrete], data[columns_numeric]
