@@ -29,6 +29,7 @@ import MutiLabelEncoder as labelencoder
 import split as sp
 import numpy as np
 import random
+import preprocessing
 
 #data is divided into two parts : traning data and test data
 def splitData(dataSet, num_of_testing):
@@ -39,7 +40,9 @@ def splitData(dataSet, num_of_testing):
 def loadData(filePath):
 #    df = pd.read_csv(filePath, sep='\t')
 #    df = sp.getNoMissingData(filePath)
-    df = sp.getTwoTypesData(filePath)
+    df = preprocessing.getDataAfterPreprocessing(filePath)
+#    df = sp.getTwoTypesData(filePath)
+#    df = preprocessing.binningDiscreteVariables(df)
     training_data, testing_data = splitData(df, 1000)
     return training_data, testing_data
 
@@ -150,6 +153,38 @@ def selectFeature(data, label):
     model = SelectFromModel(clf, threshold='0.1*mean', prefit=True)
     data = model.transform(data)
     return data
+#        clf = ExtraTreesClassifier()
+##    clf = SVR(kernel="linear")
+#    clf = clf.fit(data, label)
+##linearsvc    
+##    lsvc = LinearSVC(C=0.01, penalty="l1", dual=False).fit(data, label)
+##VarianceThreshold
+#    sel = VarianceThreshold(threshold=(.9 * (1 - .9)))
+#    sel.fit_transform(data)
+##bagging
+##    bagging = BaggingClassifier(tree.DecisionTreeClassifier(max_depth=500, max_leaf_nodes= 500) ,max_samples=0.5, max_features=0.5)
+##    bagging = bagging.fit(data,label)
+##Random forest
+##    randomfor = RandomForestClassifier(n_estimators=10)
+##    randomfor = randomfor.fit(data, label)
+##decisionTree
+##    decisiontree = tree.DecisionTreeClassifier(max_depth=500, max_leaf_nodes= 500)
+##    decisiontree.fit(data,label)
+##RFE
+#    selector1 = RFE(clf, 60, step=1)
+#    selector1 = selector1.fit(data, label)
+##frommodel
+#    selector2 = SelectFromModel(clf, prefit=True)
+##    selector3 = SelectFromModel(decisiontree, prefit=True)
+##    selector4 = SelectFromModel(bagging, prefit=True)
+##KBest
+##    selector5 = SelectKBest(chi2, k=100).fit(data, label)
+##    print selector1.transform(data)
+##merge features
+#    selected_data = np.append(selector1.transform(data).T,selector2.transform(data).T,axis = 0)
+#    selected_data = np.array(list(set([tuple(x) for x in selected_data])))
+#    return selected_data.T
+##    return selector2.transform(data)
 
 #e.g. columns = ['Var1', 'Var2']
 def labelEncoder(dataframe, columns):
@@ -161,7 +196,7 @@ def labelEncoder2(dataframe):
 def main():
     #read data from files
 #    training_data, testing_data = loadData('step_preprocess.data')
-    print 'start to load and preprocess data'
+#    print 'start to load and preprocess data'
     training_data, testing_data = loadData('orange_small_train.data')
     
 #    training_data, testing_data = loadData('new.data')
@@ -177,10 +212,8 @@ def main():
     print 'feature selection'
 #    part_testing_data_appe = pd.DataFrame(selectFeature(testing_data, appe_label_test))
 #    part_training_data_appe = pd.DataFrame(selectFeature(training_data, appe_label))
-    
     part_testing_data_churn = pd.DataFrame(selectFeature(testing_data, churn_label_test))
     part_training_data_churn = pd.DataFrame(selectFeature(training_data, churn_label))
-    
 #    part_testing_data_upsel = pd.DataFrame(selectFeature(testing_data, upsel_label_test))
 #    part_training_data_upsel = pd.DataFrame(selectFeature(training_data, upsel_label))
 
@@ -203,7 +236,7 @@ def main():
 #    selectModel(part_training_data_churn, churn_label, part_testing_data_churn, churn_label_test)    
      
 #    print part_testing_data
-    print 'star to classify'
+#    print 'star to classify'
     
 #    print churn_label.values
     print 'churn:'
@@ -279,5 +312,6 @@ def main2():
     
     
 main()
+
     
     

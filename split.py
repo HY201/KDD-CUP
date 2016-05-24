@@ -15,9 +15,7 @@ def getTwoTypesData(filename):
     raw = pd.read_csv(filename, sep='\t')
     data = raw.dropna(axis=0, how='all')
     data = raw.dropna(axis=1, how='all')
-    
     data.fillna(data.mean(), inplace=True)   
-    
     for i in range(data.columns.shape[0]):
         col_name = data.columns.values[i]
         data[col_name].fillna(data[col_name].mode()[0], inplace=True)
